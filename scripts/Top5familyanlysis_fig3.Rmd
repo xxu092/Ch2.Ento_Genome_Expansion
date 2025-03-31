@@ -1,0 +1,548 @@
+---
+title: "Top5family comparison"
+author: "sharonX"
+date: "2024-08-01"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r eval=FALSE, include=FALSE}
+library(tidyverse)
+Emaifams<-read_table("~/bigdata/Top5famscomparison-EDTA/Top5Aug2024/EmaiTEfam.curated.txt",
+                   col_names = c("family","count","length","perc","NA"))
+
+```
+```{r eval=FALSE, include=FALSE}
+Emaifams %>% arrange(desc(count))
+```
+```{r eval=FALSE, include=FALSE}
+Emusfams<-read_table("~/bigdata/Top5famscomparison-EDTA/Top5Aug2024/EmusTEfam.curated.txt",
+                   col_names = c("family","count","length","perc","NA"))
+Emusfams %>% arrange(desc(count))
+```
+```{r eval=FALSE, include=FALSE}
+Mcicfams<-read_table("~/bigdata/Top5famscomparison-EDTA/Top5Aug2024/McicTEfam.curated.txt",
+                   col_names = c("family","count","length","perc","NA"))
+Mcicfams %>% arrange(desc(count))
+```
+```{r eval=FALSE, include=FALSE}
+Zradfams<-read_table("~/bigdata/Top5famscomparison-EDTA/Top5Aug2024/ZradTEfam.curated.txt",
+                   col_names = c("family","count","length","perc","NA"))
+Zradfams %>% arrange(desc(count))
+```
+```{r}
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(ggsci)
+library(gridExtra)
+library(ggplot2)
+library(hrbrthemes)
+mcicfam<-read_table("~/bigdata/TE_composition-EDTA/tables/Mcicfamilysummary.txt",col_names = F)
+colnames(mcicfam)<-c("family","count","bp","percentage","unknown")
+head(mcicfam)
+```
+```{r}
+mcic <- read_tsv("~/bigdata/TE_composition-EDTA/tables/McicTEtableV3.tsv")
+mcicfam1<-mcic %>% group_by(family,class) %>% summarise(n=n())
+mcicfam2<-left_join(mcicfam,mcicfam1,join_by(family))
+head(mcicfam2)
+```
+remove INT and LTR from family name, and add a column with species and classification name to it
+```{r}
+mcicfam2$family<-sub("_INT","",mcicfam2$family)
+mcicfam2$family<-sub("_LTR","",mcicfam2$family)
+mcicfam2 <- mcicfam2 %>% mutate(familyname = paste("Mcic",mcicfam2$family,mcicfam2$class))
+
+```
+```{r}
+mcicfam2 %>% arrange(desc(count))
+```
+Biggest families by number
+```{r}
+mcictop1<-mcicfam2 %>% arrange(desc(count))
+mcictopnum<-head(mcictop1,5)
+mcictopnum$familyname<-sub("DTM","Mutator",mcictopnum$familyname)
+mcictopnum$familyname<-sub("DTC","CMC",mcictopnum$familyname)
+mcictopnum %>%
+   ggplot(aes(x=reorder(familyname,count), y=count)) +
+   geom_bar(stat="identity", fill="#00A087FF") +
+  theme_bw()+
+   xlab("TE family")+
+   ylab("copy number")+
+   coord_flip()
+```
+```{r}
+emus <- read_table("~/bigdata/EDTA/RepeatLandscape2-EDTA/Entomophthora_muscae_UCB.Nanopore10X_v2.rmblast/Entomophthora_muscae_UCB.Nanopore10X_v2.fasta.out",skip=3,col_names = F)
+colnames(emus) <-c("score","div.","del.","ins.","query","beginq","endq","leftq","strand","family","class","beginr","endr","leftr","ID","overlap")
+emus <- emus %>% mutate(length=endq-beginq +1) 
+emus1 <- subset(emus,class != "Low_complexity")
+emus2 <- subset(emus1,class != "Simple_repeat")
+emusfam<-read_table("~/bigdata/TE_composition-EDTA/tables/Emusfamilysummary.txt",col_names = F)
+colnames(emusfam)<-c("family","count","bp","percentage","unknown")
+head(emusfam)
+```
+```{r}
+emusfam1<-emus2 %>% group_by(family,class) %>% summarise(n=n())
+emusfam2<-left_join(emusfam,emusfam1,join_by(family))
+head(emusfam2)
+```
+remove INT and LTR from family name, and add a column with species and classification name to it
+```{r}
+emusfam2$family<-sub("_INT","",emusfam2$family)
+emusfam2$family<-sub("_LTR","",emusfam2$family)
+emusfam2 <- emusfam2 %>% mutate(familyname = paste("Emus",emusfam2$family,emusfam2$class))
+emusfam2 %>% arrange(desc(percentage))
+```
+```{r}
+emusfam2 %>% arrange(desc(count))
+```
+
+```{r}
+emustop1<-emusfam2 %>% arrange(desc(count))
+emustopnum<-head(emustop1,5)
+emustopnum$familyname<-sub("DTM","Mutator",emustopnum$familyname)
+emustopnum$familyname<-sub("DTC","CMC",emustopnum$familyname)
+emustopnum$familyname<-sub("DTT","TcMar",emustopnum$familyname)
+emustopnum$familyname<-sub("DTA","hAT",emustopnum$familyname)
+emustopnum %>%
+   ggplot(aes(x=reorder(familyname,count), y=count)) +
+   geom_bar(stat="identity", fill="#4DBBD5FF") +
+  theme_bw()+
+   xlab("TE family")+
+   ylab("count number")+
+   coord_flip() 
+```
+```{r}
+emai <- read_table("~/bigdata/EDTA/RepeatLandscape2-EDTA/Entomophaga_maimaiga_var_ARSEF_7190.rmblast1/Entomophaga_maimaiga_var_ARSEF_7190.fasta.out",skip=3,col_names = F)
+colnames(emai) <-c("score","div.","del.","ins.","query","beginq","endq","leftq","strand","family","class","beginr","endr","leftr","ID","overlap")
+emai <- emai %>% mutate(length=endq-beginq +1) 
+emai1 <- subset(emai,class != "Low_complexity")
+emai2 <- subset(emai1,class != "Simple_repeat")
+zrad <- read_tsv("~/bigdata/TE_composition-EDTA/tables/ZradTEtableV3.tsv")
+```
+```{r}
+emaifam<-read_table("~/bigdata/TE_composition-EDTA/tables/Emaifamilysummary.txt",col_names = F)
+colnames(emaifam)<-c("family","count","bp","percentage","unknown")
+head(emaifam)
+```
+```{r}
+emaifam1<-emai2 %>% group_by(family,class) %>% summarise(n=n())
+emaifam2<-left_join(emaifam,emaifam1,join_by(family))
+head(emaifam2)
+```
+remove INT and LTR from family name, and add a column with species and classification name to it
+```{r}
+emaifam2$family<-sub("_INT","",emaifam2$family)
+emaifam2$family<-sub("_LTR","",emaifam2$family)
+emaifam2 <- emaifam2 %>% mutate(familyname = paste("Emai",emaifam2$family,emaifam2$class))
+emaifam2 %>% arrange(desc(percentage))
+```
+```{r}
+emaifam2 %>% arrange(desc(count))
+```
+```{r eval=FALSE, include=FALSE}
+emaibig1<-emaifam2 %>% arrange(desc(percentage))
+emaitop <- head(emaibig1,25)
+emaitop$familyname<-sub("DTM","Mutator",emaitop$familyname)
+emaitop$familyname<-sub("DTC","CMC",emaitop$familyname)
+emaitop$familyname<-sub("DTT","TcMar",emaitop$familyname)
+emaitop$familyname<-sub("DTA","hAT",emaitop$familyname)
+emaitop$percentage <- sub("%","",emaitop$percentage)
+emaitop$percentage<-as.numeric(emaitop$percentage)
+emaitop %>%
+   ggplot(aes(x=reorder(familyname,percentage), y=percentage)) +
+   geom_bar(stat="identity", fill="#E64B35FF") +
+  theme_bw()+
+   xlab("TE family")+
+   ylab("genome coverage %")+
+   coord_flip() +
+   ggtitle("E.maimaiga top 25 families")
+```
+```{r}
+emaitop1<-emaifam2 %>% arrange(desc(count))
+emaitopnum<-head(emaitop1,5)
+emaitopnum$familyname<-sub("DTM","Mutator",emaitopnum$familyname)
+emaitopnum$familyname<-sub("DTC","CMC",emaitopnum$familyname)
+emaitopnum$familyname<-sub("DTT","TcMar",emaitopnum$familyname)
+emaitopnum$familyname<-sub("DTA","hAT",emaitopnum$familyname)
+emaitopnum %>%
+   ggplot(aes(x=reorder(familyname,count), y=count)) +
+   geom_bar(stat="identity", fill="#E64B35FF") +
+  theme_bw()+
+   xlab("TE family")+
+   ylab("count number")+
+   coord_flip() 
+```
+for Zrad
+```{r}
+zradfam<-read_table("~/bigdata/TE_composition-EDTA/tables/Zradfamilysummary.txt",col_names = F)
+colnames(zradfam)<-c("family","count","bp","percentage","unknown")
+head(zradfam)
+```
+```{r}
+zradfam1<-zrad %>% group_by(family,class) %>% summarise(n=n())
+zradfam2<-left_join(zradfam,zradfam1,join_by(family))
+head(zradfam2)
+```
+remove INT and LTR from family name, and add a column with species and classification name to it
+```{r}
+zradfam2$family<-sub("_INT","",zradfam2$family)
+zradfam2$family<-sub("_LTR","",zradfam2$family)
+zradfam2 <- zradfam2 %>% mutate(familyname = paste("Zrad",zradfam2$family,zradfam2$class))
+zradfam2 %>% arrange(desc(percentage))
+```
+```{r}
+zradfam2 %>% arrange(desc(count))
+```
+```{r eval=FALSE, include=FALSE}
+zradbig1<-zradfam2 %>% arrange(desc(percentage))
+zradtop <- head(zradbig1,25)
+zradtop$familyname<-sub("DTM","Mutator",zradtop$familyname)
+zradtop$familyname<-sub("DTC","CMC",zradtop$familyname)
+zradtop$familyname<-sub("DTT","TcMar",zradtop$familyname)
+zradtop$familyname<-sub("DTA","hAT",zradtop$familyname)
+zradtop$percentage <- sub("%","",zradtop$percentage)
+zradtop$percentage<-as.numeric(zradtop$percentage)
+zradtop %>%
+   ggplot(aes(x=reorder(familyname,percentage), y=percentage)) +
+   geom_bar(stat="identity", fill="#3C5488FF") +
+  theme_bw()+
+   xlab("TE family")+
+   ylab("genome coverage %")+
+   coord_flip() +
+   ggtitle("Z.radicans top 25 families")
+```
+```{r}
+zradtop1<-zradfam2 %>% arrange(desc(count))
+zradtopnum<-head(zradtop1,5)
+zradtopnum$familyname<-sub("DTM","Mutator",zradtopnum$familyname)
+zradtopnum$familyname<-sub("DTC","CMC",zradtopnum$familyname)
+zradtopnum$familyname<-sub("DTT","TcMar",zradtopnum$familyname)
+zradtopnum$familyname<-sub("DTA","hAT",zradtopnum$familyname)
+zradtopnum %>%
+   ggplot(aes(x=reorder(familyname,count), y=count)) +
+   geom_bar(stat="identity", fill="#3C5488FF") +
+  theme_bw()+
+   xlab("TE family")+
+   ylab("count number")+
+   coord_flip() +
+   ggtitle("Z.radicans top 25 families by abundance")
+
+```
+In non-overlapping count make idenctity column
+group_by ID,familyname, summarise average identity(03/25/2024, add length column, for same ID,sum is the length)
+subset the table only look at the interesting family
+For M.cic let's do top 10 families first
+remove overlapping counts for all species
+```{r}
+mcic$overlap[is.na(mcic$overlap)] <- 1
+mcicNO<-mcic %>% filter(overlap != "*")
+
+zrad$overlap[is.na(zrad$overlap)] <- 1
+zradNO<-zrad %>% filter(overlap != "*")
+
+emus2$overlap[is.na(emus2$overlap)] <- 1
+emusNO<-emus2 %>% filter(overlap != "*")
+
+emai2$overlap[is.na(emai2$overlap)] <- 1
+emaiNO<-emai2 %>% filter(overlap != "*")
+```
+```{r}
+library(viridis)
+mcicNO<-mcicNO %>% mutate(Identity=100-div.)
+mcicNO$family<-sub("_INT","",mcicNO$family)
+mcicNO$family<-sub("_LTR","",mcicNO$family)
+mcicNO <- mcicNO %>% mutate(familyname = paste("Mcic",mcicNO$family,mcicNO$class))
+mcicNO1<-mcicNO %>% group_by(ID,familyname) %>% summarise(Identity=mean(Identity),Len=sum(length))
+
+
+mcictopnumfamname<-c(mcictopnum$familyname)
+mcictopnumfamname<-sub("Mutator","DTM",mcictopnumfamname)
+mcictopnumfamname<-sub("CMC","DTC",mcictopnumfamname)
+
+mcictopnumIden<-subset(mcicNO1,familyname == mcictopnumfamname)
+mcictopnumIden$familyname<-sub("DTM","Mutator",mcictopnumIden$familyname)
+mcictopnumIden$familyname<-sub("DTC","CMC",mcictopnumIden$familyname)
+
+
+mcictopnumIden %>% ggplot(aes(x=Identity,y=familyname)) +
+  geom_violin(width=1.7)+
+  geom_boxplot(width=0.2, color="grey", alpha=0.2,outlier.size = 0) +
+  scale_fill_viridis(discrete = TRUE)+
+  theme_ipsum()
+```
+```{r}
+zradNO<-zradNO %>% mutate(Identity=100-div.)
+zradNO$family<-sub("_INT","",zradNO$family)
+zradNO$family<-sub("_LTR","",zradNO$family)
+zradNO <- zradNO %>% mutate(familyname = paste("Zrad",zradNO$family,zradNO$class))
+```
+
+
+```{r eval=FALSE, include=FALSE}
+zradNO1<-zradNO %>% group_by(ID,familyname) %>% summarise(Identity=mean(Identity))
+
+
+zradtopnumfamname<-c(zradtopnum$familyname)
+zradtopnumIden<-subset(zradNO1,familyname == zradtopnumfamname)
+zradtopnumfamname<-sub("Mutator","DTM",zradtopnumfamname)
+zradtopnumfamname<-sub("TcMar","DTT",zradtopnumfamname)
+zradtopnumIden$familyname<-sub("DTM","Mutator",zradtopnumIden$familyname)
+zradtopnumIden$familyname<-sub("DTT","TcMar",zradtopnumIden$familyname)
+
+zradtopnumIden %>% ggplot(aes(x=Identity,y=familyname)) +
+  geom_violin(width=1.7)+
+  geom_boxplot(width=0.2, color="grey", alpha=0.2,outlier.size = 0) +
+  scale_fill_viridis(discrete = TRUE)+
+  theme_ipsum()
+```
+```{r}
+emusNO<-emusNO %>% mutate(Identity=100-div.)
+emusNO$family<-sub("_INT","",emusNO$family)
+emusNO$family<-sub("_LTR","",emusNO$family)
+emusNO <- emusNO %>% mutate(familyname = paste("Emus",emusNO$family,emusNO$class))
+```
+```{r}
+emusNO1<-emusNO %>% group_by(ID,familyname) %>% summarise(Identity=mean(Identity))
+emustopnumfamname<-c(emustopnum$familyname)
+emustopnumfamname<-sub("CMC","DTC",emustopnumfamname)
+emustopnumIden<-subset(emusNO1,familyname == emustopnumfamname)
+
+
+emustopnumIden$familyname<-sub("DTC","CMC",emustopnumIden$familyname)
+#zradtop10Iden$familyname<-sub("DTT","TcMar",zradtop10Iden$familyname)
+#zradtop10Iden$familyname<-sub("DTA","hAT",zradtop10Iden$familyname)
+emustopnumIden %>% ggplot(aes(x=Identity,y=familyname)) +
+  geom_violin(width=1.7)+
+  geom_boxplot(width=0.2, color="grey", alpha=0.2,outlier.size = 0) +
+  scale_fill_viridis(discrete = TRUE)+
+  theme_ipsum()
+```
+```{r}
+emaiNO<-emaiNO %>% mutate(Identity=100-div.)
+emaiNO$family<-sub("_INT","",emaiNO$family)
+emaiNO$family<-sub("_LTR","",emaiNO$family)
+emaiNO <- emaiNO %>% mutate(familyname = paste("Emai",emaiNO$family,emaiNO$class))
+emaiNO1<-emaiNO %>% group_by(ID,familyname) %>% summarise(Identity=mean(Identity),Len=sum(length))
+```
+
+
+```{r}
+emaitopnumfamname<-emaitopnum$familyname
+emaitopnumfamname
+emaitopnumfamname<-sub("Mutator","DTM",emaitopnumfamname)
+emaitop10famname<-c(emaitop10$familyname,"Emai TE_00001229 MITE/DTM")
+emaitopnumIden<-subset(emaiNO1,familyname == emaitopnumfamname)
+emaitopnumIden$familyname<-sub("DTM","Mutator",emaitopnumIden$familyname)
+
+#zradtop10Iden$familyname<-sub("DTT","TcMar",zradtop10Iden$familyname)
+#zradtop10Iden$familyname<-sub("DTA","hAT",zradtop10Iden$familyname)
+emaitopnumIden %>% ggplot(aes(x=Identity,y=familyname)) +
+  geom_violin(width=1.7)+
+  geom_boxplot(width=0.2, color="grey", alpha=0.2,outlier.size = 0) +
+  scale_fill_viridis(discrete = TRUE)+
+  theme_ipsum()
+```
+```{r}
+library(cowplot)
+library(ggridges)
+topnumiden<-rbind(emaitopnumIden,emustopnumIden,mcictopnumIden,zradtopnumIden)
+topnumiden %>% ggplot(aes(x=Identity,y=familyname,fill=familyname)) +
+  geom_density_ridges(stat="binline")+
+  theme_ridges()+
+  scale_fill_viridis(discrete = TRUE)+
+  theme_cowplot(16)+
+  theme(legend.position = "none")
+```
+```{r}
+topnumiden %>% ggplot(aes(x=Identity,y=familyname,fill=familyname)) +
+  geom_density_ridges()+
+  theme_ridges()+
+  scale_fill_viridis(discrete = TRUE)+
+  theme_cowplot(16)+
+  theme(legend.position = "none")
+```
+```{r}
+topnum<-rbind(mcictopnum,emustopnum,emaitopnum,zradtopnum)
+
+topnumfamname<-rev(topnum$familyname)
+topnumfamname<-sub("_0000","",topnumfamname)
+topnum$species<-substr(topnum$familyname,1,4)
+topnum$familyname<-sub("_0000","",topnum$familyname)
+fig4a2<-topnum%>%ggplot(aes(x=count,y=fct_relevel(familyname,topnumfamname),fill=species)) +
+  geom_bar(stat = "identity") +
+  theme_cowplot(16)+
+  xlab("Copy number")+
+  ylab("")+
+  labs(fill= "Species") +
+  theme(legend.text = element_text(face = "italic")) +
+  theme(axis.text.y  = element_text(size = 0))
+fig4a2
+```
+```{r}
+#install.packages("paletteer")
+library(paletteer)
+library(ggplot2)
+library(ggridges)
+library(viridis)
+topnumiden$familyname<-sub("_0000","",topnumiden$familyname)
+topnumiden<-separate(topnumiden,familyname,into=c("species","family","class")," ",remove = F)
+topnumiden<-separate(topnumiden,class,into = c("super","fam"),"/")
+fig4a1<-topnumiden %>% ggplot(aes(x=Identity,y=fct_relevel(familyname,topnumfamname),fill=super)) +
+  geom_violin(width = 1.5)+
+  
+  scale_fill_viridis(discrete = T)+
+  theme_cowplot(16)+
+  theme(legend.position = "none") +
+  ylab("")
+fig4a1
+```
+```{r}
+fig4a<-plot_grid(fig4a1,fig4a2,rel_widths =c(2,1))
+```
+```{r}
+mcicpanfam<-read_table("~/bigdata/EDTA/RepeatLandscape2-EDTA/panEDTArm/Mcicfamsummary.txt",col_names = F)
+colnames(mcicpanfam)<-c("family","mcic","bp","M.cicadina","unknown")
+mcicpanfam1<-mcicpanfam %>% select(c(family,mcic))
+
+head(mcicpanfam1)
+```
+```{r}
+zradpanfam<-read_table("~/bigdata/EDTA/RepeatLandscape2-EDTA/panEDTArm/Zradfamsummary.txt",col_names = F)
+colnames(zradpanfam)<-c("family","zrad","bp","Z.radicans","unknown")
+zradpanfam1<-zradpanfam %>% select(c(family,zrad))
+head(zradpanfam1)
+```
+```{r}
+emuspanfam<-read_table("~/bigdata/EDTA/RepeatLandscape2-EDTA/panEDTArm/Emusfamsummary.txt",col_names = F)
+colnames(emuspanfam)<-c("family","emus","bp","E.muscae","unknown")
+emuspanfam1<-emuspanfam %>% select(c(family,emus))
+
+head(emuspanfam1)
+```
+```{r}
+emaipanfam<-read_table("~/bigdata/EDTA/RepeatLandscape2-EDTA/panEDTArm/Emaifamsummary.txt",col_names = F)
+colnames(emaipanfam)<-c("family","emai","bp","E.maimaiga","unknown")
+emaipanfam1<-emaipanfam %>% select(c(family,emai))
+
+head(emaipanfam1)
+```
+join all tables
+```{r}
+fam1<-full_join(mcicpanfam1,zradpanfam1,join_by(family))
+fam2<-full_join(fam1,emaipanfam1,join_by(family))
+fam3<-full_join(fam2,emuspanfam1,join_by(family))
+fam3[is.na(fam3)] <- 0
+fam3$family<- sub("_INT","",fam3$family)
+fam3$family<- sub("_LTR","",fam3$family)
+mcic5<-fam3 %>% arrange(desc(mcic)) %>% head(5) 
+mciclist<-mcic5$family
+```
+```{r}
+zrad5<-fam3 %>% arrange(desc(zrad)) %>% head(5)
+zradlist<-zrad5$family
+```
+```{r}
+emai5<-fam3 %>% arrange(desc(emai)) %>% head(5)
+emailist<-emai5$family
+```
+```{r}
+emus5<- fam3 %>% arrange(desc(emus)) %>% head(5)
+emuslist<-emus5$family
+panfam<-rbind(mcic5,zrad5,emai5,emus5)
+colnames(panfam)<-c("family","M.cicadina","Z.radicans","E.maimaiga","E.muscae")
+panfam<-as.data.frame(panfam)
+rownames(panfam)<-panfam$family
+panfam<-panfam[,-1]
+panfam <- panfam %>% rownames_to_column(var = "Row")
+
+# Pivot the data to long format
+panfam_long <- panfam1 %>%
+  pivot_longer(-Row, names_to = "Column", values_to = "Value")
+
+# Ensure 'Value' column is numeric
+
+panfam_long$Value <- as.numeric(as.character(panfam_long$Value))
+panfam_long$Column<-sub("mcic","M.cicadina",panfam_long$Column)
+panfam_long$Column<-sub("emus","E.muscae",panfam_long$Column)
+panfam_long$Column<-sub("emai","E.maimaiga",panfam_long$Column)
+panfam_long$Column<-sub("zrad","Z.radicans",panfam_long$Column)
+ggplot(panfam_long, aes(x = Column, y = Row, fill = Value)) +
+  geom_tile(color="black") +
+  geom_text(aes(label = round(Value, 1)), color = "black") +
+  scale_fill_paletteer_c("pals::coolwarm")+
+  theme_cowplot(16) +
+  labs( x = "species", y = "TE Family")+
+  theme(axis.text.x = element_text( hjust = 1,face = "italic"))
+```
+```{r}
+famlist<-c(mciclist,emuslist,emailist,zradlist)
+famlist<-rev(famlist)
+famlist<-sub("_0000","",famlist)
+specieslist<-c("M.cicadina","E.muscae","E.maimaiga","Z.radicans")
+panfam_long$Row<-sub("_0000","",panfam_long$Row)
+fig4b<-ggplot(panfam_long, aes(x = fct_relevel(Column,specieslist), y = fct_relevel(Row,famlist), fill = Value)) +
+  geom_tile(color="black") +
+  geom_text(aes(label = round(Value, 1)), color = "black") +
+  scale_fill_paletteer_c("pals::coolwarm")+
+  theme_cowplot(16) +
+  labs( x = "Species", y = "TE Family")+
+  theme(axis.text.x = element_text( hjust = 1,face = "italic"))
+
+fig4b
+```
+```{r}
+fig4<-plot_grid(fig4a,fig4b,labels = c("A","B"),nrow = 2,byrow = F)
+fig4
+ggsave("~/bigdata/TE_composition-EDTA/plots/fig4v2.pdf",fig4, dpi = 500,
+       width = 11, height = 12)
+```
+```{r}
+library(tidyverse)
+emaitopnumIden %>% filter(Identity >= 85) %>% group_by(familyname)%>% summarise(n=n())
+```
+```{r}
+library(tidyverse)
+emai2 %>% filter(family == "TE_00001435_LTR") %>% arrange(desc(length))
+
+```
+```{r}
+emai2 %>% filter(family == "TE_00001293_INT") %>% arrange(desc(length))
+```
+```{r}
+emai2 %>% filter(family == "TE_00001953_INT") %>% arrange(desc(length))
+```
+```{r}
+emai2 %>% filter(family == "TE_00002374") %>% arrange(desc(length))
+
+```
+```{r}
+emai2 %>% filter(family == "TE_00002184") %>% arrange(desc(length))
+
+```
+
