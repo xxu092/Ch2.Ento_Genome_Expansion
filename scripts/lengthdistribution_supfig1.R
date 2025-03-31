@@ -19,7 +19,7 @@ colnames(emai) <-c("score","div.","del.","ins.","query","beginq","endq","leftq",
 emai <- emai %>% mutate(length=endq-beginq +1) 
 emai1 <- subset(emai,class != "Low_complexity")
 emai2 <- subset(emai1,class != "Simple_repeat")
-```
+
 mcic$overlap[is.na(mcic$overlap)] <- 1
 mcicNO<-mcic %>% filter(overlap != "*")
 
