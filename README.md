@@ -10,3 +10,4 @@ in pipeline folder run `01_EDTA.sh` script
 in pipeline folder run `02_RM.sh` script
 
 ## Draw repeatlandscape 
+in pipeline folder run `03_repeatlandscape.sh` script
